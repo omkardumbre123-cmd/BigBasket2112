@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 
 st.set_page_config(page_title="FMCG Gap Explorer", layout="wide")
 st.title("FMCG Gap Explorer")
-st.caption("See the top 3 whitespace opportunities in each category — simple, clear, and visual.")
+st.caption("Top 3 whitespace opportunities per category, with SKU images for context.")
 
 # --------------------------
 # Load data
@@ -42,6 +41,8 @@ def generate_recommendation(row):
 # --------------------------
 # Main logic
 # --------------------------
+gap_threshold = 0.7  # backend filter
+
 st.subheader("Choose a category")
 
 categories = sorted(cells["category"].unique())
@@ -51,7 +52,7 @@ for i, cat in enumerate(categories):
     if cols[i % 3].button(cat):
         st.markdown(f"## Top 3 gaps in {cat}")
 
-        # Pick top 3 rows (no technical scores shown to user)
+        # Pick top 3 rows
         gaps = cells[cells["category"] == cat].head(3)
 
         if gaps.empty:
@@ -65,28 +66,16 @@ for i, cat in enumerate(categories):
                     f"(claims: {row['Claims']}) → {recommendation}"
                 )
 
-            # --------------------------
-            # Charts (colorful, easy to read)
-            # --------------------------
-            st.subheader("Visual Overview")
+                # Show sample SKU images if available
+                if "p_url" in skus.columns:
+                    sample_skus = skus[
+                        (skus["category"] == row["category"]) &
+                        (skus["sub_category"] == row["sub_category"])
+                    ].head(3)  # show 3 sample SKUs
 
-            # Bar chart: count of gaps by sub-category
-            fig_bar = px.bar(
-                gaps,
-                x="sub_category",
-                color="Price_Tier",
-                title="Top 3 Gaps by Sub-Category",
-                color_discrete_sequence=px.colors.qualitative.Set2
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
-
-            # Pie chart: distribution of claims
-            fig_pie = px.pie(
-                gaps,
-                names="Claims",
-                title="Claims Distribution in Top 3 Gaps",
-                color_discrete_sequence=px.colors.qualitative.Pastel
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
+                    img_cols = st.columns(len(sample_skus))
+                    for j, (_, sku) in enumerate(sample_skus.iterrows()):
+                        with img_cols[j]:
+                            st.image(sku["p_url"], caption=sku.get("product", "SKU"), use_container_width=True)
 
         st.markdown("---")
