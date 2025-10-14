@@ -24,15 +24,18 @@ except Exception:
 # Helper: generate tailored description
 # --------------------------
 def generate_recommendation(row):
-    price = row['Price_Tier']
-    claim = row['Claims']
+    price = str(row['Price_Tier'])
+    claim = str(row['Claims'])
 
-    if "premium" in price.lower() or "high" in price.lower():
-        return f"Premium gap: Consumers may pay more for {claim} options — scope to introduce higher-end SKUs."
-    elif "low" in price.lower() or "budget" in price.lower():
-        return f"Value gap: Affordable {claim} products are missing — scope to capture price-sensitive buyers."
-    elif "mid" in price.lower():
-        return f"Mid-tier gap: Balanced {claim} offerings are underrepresented — scope to attract mainstream shoppers."
+    # Map numeric ranges into tiers
+    if "200+" in price or "₹200" in price or "₹300" in price or "₹500" in price:
+        return f"Premium gap: Higher-end {claim if claim != 'none' else ''} products are missing — scope to target affluent buyers."
+    elif "101" in price or "201" in price:
+        return f"Mid-tier gap: Mainstream {claim if claim != 'none' else ''} options are underrepresented — scope to attract everyday shoppers."
+    elif "51" in price or "100" in price:
+        return f"Value gap: Affordable {claim if claim != 'none' else ''} products are missing — scope to capture price-sensitive buyers."
+    elif "1–50" in price or "₹1" in price:
+        return f"Entry-level gap: Ultra-low price {claim if claim != 'none' else ''} products are absent — scope to drive trial and volume."
     else:
         return f"Gap in {price} tier with {claim} claims — scope to expand assortment."
 
