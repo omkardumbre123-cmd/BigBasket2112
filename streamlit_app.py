@@ -3,7 +3,7 @@ import pandas as pd
 
 st.set_page_config(page_title="FMCG Gap Explorer", layout="wide")
 st.title("FMCG Gap Explorer")
-st.caption("Top 3 whitespace opportunities per category, with SKU images for context.")
+st.caption("Top 3 whitespace opportunities per category, with product visuals for context.")
 
 # --------------------------
 # Load data
@@ -39,10 +39,63 @@ def generate_recommendation(row):
         return f"Opportunity: Add more {claim if claim != 'none' else ''} products in this price tier."
 
 # --------------------------
+# Fallback category images
+# --------------------------
+category_images = {
+    "Bakery, Cakes & Dairy": [
+        "https://milkbarstore.com/cdn/shop/products/birthday-cake.jpg",
+        "https://store.portosbakery.com/cdn/shop/products/milk-n-berries-cake.jpg"
+    ],
+    "Beverages": [
+        "https://images.unsplash.com/photo-1580910051074-7d4f3f3a7f4f",
+        "https://images.unsplash.com/photo-1604908177522-040b8f67e0f7"
+    ],
+    "Snacks": [
+        "https://images.unsplash.com/photo-1606788075761-1f7b6f3c9f3f",
+        "https://images.unsplash.com/photo-1589308078055-7a4a1a2e2f3f"
+    ],
+    "Fruits & Vegetables": [
+        "https://images.unsplash.com/photo-1572441710534-680c6f3c9f3f",
+        "https://images.unsplash.com/photo-1606788075761-1f7b6f3c9f3f"
+    ],
+    "Frozen Snacks": [
+        "https://www.thekitchn.com/thmb/best-frozen-snacks.jpg",
+        "https://www.eater.com/thmb/frozen-snacks.jpg"
+    ],
+    "Ready to Cook": [
+        "https://www.mtrfoods.com/wp-content/uploads/2021/07/ready-to-cook.jpg",
+        "https://www.nilons.com/images/ready-to-cook.jpg"
+    ],
+    "Condiments & Sauces": [
+        "https://sporked.com/wp-content/uploads/2022/05/best-condiments.jpg",
+        "https://www.seriouseats.com/thmb/hot-sauces.jpg"
+    ],
+    "Pantry Staples": [
+        "https://www.thespruceeats.com/thmb/pantry-staples.jpg",
+        "https://www.allrecipes.com/thmb/pantry-essentials.jpg"
+    ],
+    "Gardening Tools": [
+        "https://www.homedepot.com/p/9-Piece-Stainless-Steel-Gardening-Tools.jpg",
+        "https://www.amazon.com/Garden-Set-Gardening-Ergonomic/dp/B08JHYMV4W"
+    ],
+    "Pots & Planters": [
+        "https://www.amazon.com/GARDIFE-planters-Indoor-Plants-Flower/dp/B0CGF34GT8",
+        "https://www.homedepot.com/p/Algreen-PRODUCTS-20-in-Tall-Crete-Planter.jpg"
+    ],
+    "Prayer Accessories": [
+        "https://www.amazon.com/Tasbih-Turquoise-Misbaha-Islamic-Accessories/dp/B09GYSF299",
+        "https://www.dharmashop.com/products/tibetan-prayer-wheel-hand-held-8-symbols"
+    ],
+    "Spiritual Books": [
+        "https://www.oprahdaily.com/entertainment/books/g40575967/spiritual-books/",
+        "https://www.amazon.com/Prophet-Spirituality-Classic-Capstone-Classics/dp/0857088556"
+    ]
+    # You can keep expanding this dictionary for all categories in your dataset
+}
+
+# --------------------------
 # Main logic
 # --------------------------
-gap_threshold = 0.7  # backend filter
-
 st.subheader("Choose a category")
 
 categories = sorted(cells["category"].unique())
@@ -66,16 +119,23 @@ for i, cat in enumerate(categories):
                     f"(claims: {row['Claims']}) → {recommendation}"
                 )
 
-                # Show sample SKU images if available
-                if "p_url" in skus.columns:
-                    sample_skus = skus[
-                        (skus["category"] == row["category"]) &
-                        (skus["sub_category"] == row["sub_category"])
-                    ].head(3)  # show 3 sample SKUs
+            # --------------------------
+            # Show SKU images if available, else fallback category images
+            # --------------------------
+            st.subheader("Product Examples")
 
+            if "p_url" in skus.columns:
+                sample_skus = skus[(skus["category"] == cat)].head(3)
+                if not sample_skus.empty:
                     img_cols = st.columns(len(sample_skus))
                     for j, (_, sku) in enumerate(sample_skus.iterrows()):
                         with img_cols[j]:
                             st.image(sku["p_url"], caption=sku.get("product", "SKU"), use_container_width=True)
+                else:
+                    if cat in category_images:
+                        st.image(category_images[cat], use_container_width=True)
+            else:
+                if cat in category_images:
+                    st.image(category_images[cat], use_container_width=True)
 
         st.markdown("---")
