@@ -4,7 +4,7 @@ import random
 
 st.set_page_config(page_title="FMCG Gap Explorer", layout="wide")
 st.title("📊 FMCG Gap Explorer")
-st.caption("Identify whitespace opportunities across categories — with clear descriptions and claims.")
+st.caption("Identify whitespace opportunities across categories — with varied descriptions and claims.")
 
 # --------------------------
 # Load data
@@ -39,20 +39,48 @@ def enrich_claim(claim):
     return claim
 
 # --------------------------
-# Personalized description based on price tier
+# Pools of varied descriptions
 # --------------------------
+descriptions = {
+    "premium": [
+        "Premium whitespace — affluent shoppers lack indulgent options.",
+        "High-end gap — scope to launch aspirational products.",
+        "Luxury tier missing — chance to capture prestige buyers."
+    ],
+    "mid": [
+        "Mainstream gap — everyday shoppers lack variety.",
+        "Mid-range whitespace — expand choices for regular buyers.",
+        "Middle tier missing — scope to strengthen core portfolio."
+    ],
+    "value": [
+        "Value gap — affordable products missing for price-sensitive buyers.",
+        "Budget whitespace — scope to win over cost-conscious households.",
+        "Low-cost tier missing — chance to drive penetration."
+    ],
+    "entry": [
+        "Entry-level gap — no ultra-low price packs to drive trial.",
+        "Starter tier missing — scope to attract first-time buyers.",
+        "Base price gap — opportunity to seed volume growth."
+    ],
+    "other": [
+        "Whitespace opportunity — unmet need in this tier.",
+        "Uncovered segment — scope to innovate here.",
+        "Gap identified — potential to differentiate."
+    ]
+}
+
 def describe_opportunity(price_tier):
     price = str(price_tier)
     if "200+" in price:
-        return "Premium opportunity — scope to target affluent buyers with high-end products."
+        return random.choice(descriptions["premium"])
     elif "101" in price or "201" in price:
-        return "Mid-range gap — expand mainstream options for everyday shoppers."
+        return random.choice(descriptions["mid"])
     elif "51" in price or "100" in price:
-        return "Value segment — affordable products missing for price-sensitive buyers."
+        return random.choice(descriptions["value"])
     elif "1–50" in price or "₹1" in price:
-        return "Entry-level gap — ultra-low price products missing, chance to drive trial and volume."
+        return random.choice(descriptions["entry"])
     else:
-        return "Whitespace opportunity — unmet need in this price tier."
+        return random.choice(descriptions["other"])
 
 # --------------------------
 # Helper: pick 3 different sub-categories
