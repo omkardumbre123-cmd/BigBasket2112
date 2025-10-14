@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="FMCG Gap Finder", layout="wide")
+st.set_page_config(page_title="FMCG Gap Explorer", layout="centered")
+st.title("FMCG Gap Explorer")
+st.caption("Identify whitespace opportunities by category and price tier.")
 
 # --------------------------
 # Load data
@@ -14,37 +16,33 @@ def load_data():
 
 try:
     skus, cells = load_data()
-except Exception as e:
+except Exception:
     st.error("Make sure 'skus_enriched.csv' and 'cell_gap_scores.csv' are in the same folder as app.py.")
     st.stop()
 
 # --------------------------
-# Main
+# Main logic
 # --------------------------
-st.title("FMCG Portfolio Gap Finder")
+gap_threshold = 0.7  # backend filter
 
-# Threshold for what counts as a 'gap'
-gap_threshold = st.sidebar.slider("Gap Score threshold", 0.5, 0.95, 0.7, 0.05)
+st.subheader("Choose a category to explore gaps")
 
-# Filter cells above threshold
-gaps = cells[cells["Gap_Score"] >= gap_threshold].copy()
-gaps = gaps.sort_values("Gap_Score", ascending=False)
+# Show category buttons in a grid
+categories = sorted(cells["category"].unique())
+cols = st.columns(3)  # 3 buttons per row
 
-st.subheader("Identified Gaps")
-if gaps.empty:
-    st.info("No gaps found above the selected threshold.")
-else:
-    st.dataframe(
-        gaps[["category", "sub_category", "Price_Tier", "Claims", "Gap_Score"]],
-        use_container_width=True
-    )
+for i, cat in enumerate(categories):
+    if cols[i % 3].button(cat):
+        st.markdown(f"### Gaps in {cat}")
+        gaps = cells[(cells["category"] == cat) & (cells["Gap_Score"] >= gap_threshold)]
+        
+        if gaps.empty:
+            st.info("No significant gaps found in this category.")
+        else:
+            for _, row in gaps.iterrows():
+                st.write(
+                    f"- {row['sub_category']} at {row['Price_Tier']} "
+                    f"(claims: {row['Claims']}) → Opportunity: Introduce or reposition SKUs to capture unmet demand."
+                )
 
-    # Simple descriptive recommendations
-    st.subheader("What can be done")
-    for _, row in gaps.iterrows():
-        st.write(
-            f"- In **{row['category']} / {row['sub_category']}**, "
-            f"the **{row['Price_Tier']}** tier with claim **{row['Claims']}** "
-            f"shows a gap (score {row['Gap_Score']:.2f}). "
-            f"👉 Consider launching or repositioning SKUs here to capture unmet demand."
-        )
+        st.markdown("---")
