@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="FMCG Gap Explorer", layout="centered")
-st.title("FMCG Gap Explorer")
-st.caption("See 3 different gaps per category — simple and clear.")
+st.set_page_config(page_title="FMCG Gap Explorer", layout="wide")
+st.title("📊 FMCG Gap Explorer")
+st.caption("Identify whitespace opportunities across categories — simple, clear, and professional.")
 
 # --------------------------
 # Load data
@@ -21,34 +21,44 @@ except Exception:
     st.stop()
 
 # --------------------------
-# Helper: pick 3 rows (no claims needed)
+# Helper: pick 3 different sub-categories
 # --------------------------
-def pick_top3(df, category):
+def pick_three(df, category):
     subset = df[df["category"] == category].copy()
-    # Ensure unique sub-categories
     subset = subset.drop_duplicates(subset=["sub_category"])
     return subset.head(3)
 
 # --------------------------
-# Main logic
+# Sidebar filters
 # --------------------------
-st.subheader("Choose a category")
-
+st.sidebar.header("🔎 Filters")
 categories = sorted(cells["category"].unique())
-cols = st.columns(3)  # buttons in a grid
+selected_category = st.sidebar.selectbox("Choose a category", categories)
 
-for i, cat in enumerate(categories):
-    if cols[i % 3].button(cat):
-        st.markdown(f"## Gaps in {cat}")
+# --------------------------
+# Main display
+# --------------------------
+st.subheader(f"Gaps in {selected_category}")
 
-        gaps = pick_top3(cells, cat)
+gaps = pick_three(cells, selected_category)
 
-        if gaps.empty:
-            st.info("No major gaps found in this category.")
-        else:
-            for _, row in gaps.iterrows():
-                st.write(
-                    f"- {row['sub_category']} at {row['Price_Tier']}"
-                )
+if gaps.empty:
+    st.info("No major gaps found in this category.")
+else:
+    # Show as a clean table
+    display_df = gaps[["sub_category", "Price_Tier"]].rename(
+        columns={"sub_category": "Sub-Category", "Price_Tier": "Price Tier"}
+    )
+    st.table(display_df)
 
-        st.markdown("---")
+    # Download button
+    csv = display_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Download Gaps as CSV",
+        data=csv,
+        file_name=f"{selected_category}_gaps.csv",
+        mime="text/csv",
+    )
+
+st.divider()
+st.caption("Built with ❤️ in Streamlit for FMCG whitespace analysis.")
